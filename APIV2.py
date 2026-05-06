@@ -1,4 +1,3 @@
-from importlib.metadata import requires
 from datetime import timedelta
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -11,7 +10,7 @@ app = Flask(__name__)
 # Em produçao NUNCA deixe essa chave hard coded!!!
 app.config['JWT_SECRET_KEY'] = 'super-secret'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=2)
-jwt = JWTManager
+jwt = JWTManager(app) # Correção: Inicializando com o app
 
 # Criação do banco de dados fictício
 usuarios = {
@@ -23,25 +22,27 @@ usuarios = {
 # Rota de login
 @app.route('/login', methods=['POST'])
 def login():
-    # Obtem as crendiciarias pelo usuario
+    # Obtem as credenciais enviadas pelo usuario
     email = request.json.get('email', None)
-    senha = request.json.get('senha',None)
+    senha = request.json.get('senha', None)
 
-    # Percorre a lista de usuarios para veriicar se as crendencias existem
-    for usuario_id, usuario in usuarios.itens():
-        if usuario[email] == email and usuario[senha] ==senha:
+    # Percorre a lista de usuarios para verificar se as credenciais existem
+    for usuario_id, usuario in usuarios.items(): # Correção: items() com 'm'
+        # Correção: acessando chaves do dicionário com aspas
+        if usuario['email'] == email and usuario['senha'] == senha:
             access_token = create_access_token(identity=usuario_id)
             return jsonify(access_token=access_token), 200
 
-
-        return jsonify({"erro: Credenciais invalidas"}), 401
+    # Correção: O erro 401 deve ficar FORA do 'for loop', e com a sintaxe JSON correta
+    return jsonify({"erro": "Credenciais invalidas"}), 401
 
 
 # Cria validaçoes de entradas
 class UserSchemas(Schema):
-    nome = fields.str(requires=True)
-    senha = fields.str(requires=True)
-    email = fields.Email(requires=True)
+    # Correção: Str com letra maiúscula e 'required'
+    nome = fields.Str(required=True)
+    senha = fields.Str(required=True)
+    email = fields.Email(required=True)
 
 
 # Rota para pegar usuário por ID
@@ -57,14 +58,12 @@ def get_usuario(id_usuario):
 # Rota para cadastrar usuário
 @app.route("/usuario", methods=['POST'])
 def criar_usuario():
-
     #Obter dados vindo da requisiçao e fazer a validaçao
-    #(baseando no Schema)
     try:
+        # Correção: Chamando a classe com o nome correto
         novo_usuario = UserSchemas().load(request.json)
     except ValidationError as erro:
         return jsonify(erro.messages), 400
-
 
     # Criar o ID do novo usuário (tamanho da lista atual +1)
     id_usuario_novo = str(len(usuarios)+1)
@@ -74,4 +73,4 @@ def criar_usuario():
 
 # Roda a aplicação
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
