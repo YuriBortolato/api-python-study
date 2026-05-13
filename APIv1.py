@@ -16,9 +16,11 @@ def get_usuario(id_usuario):
     # Buscamos um usuário na lista pelo id passado na requisição
     usuario = usuarios.get(id_usuario)
     if usuario:
-        return jsonify(usuario),200
+        dados_usuarios = {**usuario}
+        dados_usuarios.pop('senha', None)
+        return jsonify(dados_usuarios), 200
     else:
-        return jsonify({"erro":"Usuário não encontrado!"}),404
+        return jsonify({"erro":"Usuário não encontrado!"}),401
 
 # Rota para cadastrar usuário
 @app.route("/usuario", methods=['POST'])

@@ -43,7 +43,13 @@ def login():
 
 # Rota para pegar usuário por ID
 @app.route("/usuario/<id_usuario>", methods=['GET'])
+@jwt_required()
 def get_usuario(id_usuario):
+    # vericando o token jwt do usuario logado
+    id_usuario_atual = get_jwt_identity()
+    if id_usuario_atual != id_usuario:
+        return jsonify({"erro":"Não autorizado!"}), 403
+
     # Buscamos um usuário na lista pelo id passado na requisição
     usuario = usuarios.get(id_usuario)
     if usuario:
